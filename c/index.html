@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Your workout · Train with Masi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#152238; --muted:#5B6678; --rule:#D5DAE1;
+  --accent:#0F766E; --accent-ink:#FFFFFF; --ok:#1D9E75;
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#0F1621; --surface:#172030; --ink:#EEF2F7; --muted:#9AA6B8; --rule:#2A3648;
+  --accent:#2DD4BF; --accent-ink:#06201C; --ok:#5DCAA5; color-scheme:dark } }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.5;font-size:16px;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:560px;margin:0 auto;padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding-block:28px 20px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:44px;line-height:1;margin:6px 0 4px;text-wrap:balance;letter-spacing:.01em}
+.sub{color:var(--muted);font-size:15px;margin:0}
+.strip{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--rule)}
+.strip div{flex:1 1 33%;padding:14px 0;min-width:0}
+.strip div+div{border-left:1px solid var(--rule);padding-left:14px}
+.strip b{display:block;font-family:var(--display);font-size:26px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.strip span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+h2{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin:28px 0 4px;color:var(--muted)}
+ol.ex{list-style:none;margin:0;padding:0}
+ol.ex li{display:grid;grid-template-columns:36px 1fr;column-gap:12px;padding:18px 0;border-bottom:1px solid var(--rule)}
+.num{font-family:var(--display);font-size:28px;font-weight:700;color:var(--accent);line-height:1;padding-top:4px;font-variant-numeric:tabular-nums}
+.name{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.05;margin:0}
+.dose{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 12px;font-variant-numeric:tabular-nums}
+.dose b{font-size:20px;font-weight:600}
+.dose small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.video{position:relative;width:100%;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;margin:0 0 12px;border:0;padding:0;cursor:pointer;display:block}
+.video img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9}
+.video .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.video .play span{background:var(--accent);color:var(--accent-ink);font:600 14px var(--body);padding:10px 16px;border-radius:999px}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.sets{display:flex;gap:6px}
+.set{width:32px;height:32px;border:2px solid var(--rule);border-radius:50%;background:var(--surface);color:var(--muted);font:600 12px var(--body);cursor:pointer;padding:0;font-variant-numeric:tabular-nums}
+.set[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.set:focus-visible,.video:focus-visible,.save:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.kg{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.kg input{width:68px;height:36px;border:2px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink);font:600 15px var(--body);padding:0 8px;text-align:right;font-variant-numeric:tabular-nums}
+.kg input:focus-visible{outline:none;border-color:var(--accent)}
+.kg span{font-size:12px;color:var(--muted);font-weight:600}
+.save{height:36px;border:0;border-radius:6px;background:var(--accent);color:var(--accent-ink);font:600 13px var(--body);padding:0 12px;cursor:pointer}
+.save[disabled]{opacity:.5;cursor:default}
+.last{font-size:12px;color:var(--muted);margin:6px 0 0}
+.last b{color:var(--ok)}
+footer{margin-top:28px;font-size:13px;color:var(--muted)}
+footer p{margin:4px 0}
+.empty{padding:40px 0;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.set{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <div class="eyebrow">Train with Masi</div>
+    <h1 id="title">Loading…</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+  <div id="content"></div>
+  <footer>
+    <p>Tap a circle to tick off a set. Type the weight you used and press Save — Masi sees it.</p>
+    <p>Questions? Message Masi on WhatsApp.</p>
+  </footer>
+</div>
+
+<script>
+(async function () {
+  var API = "https://masi-bot.osm-faria.workers.dev";
+  var code = new URLSearchParams(location.search).get("k") || "";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); };
+
+  if (!code) { $("#title").textContent = "No workout here"; $("#sub").textContent = "Use the link Masi sent you."; return; }
+
+  var data;
+  try {
+    var res = await fetch(API + "/api/client/" + encodeURIComponent(code));
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+  } catch (e) {
+    $("#title").textContent = "Couldn't load"; $("#sub").textContent = "Check your connection and reload. If it keeps failing, tell Masi.";
+    return;
+  }
+
+  var w = data.workout;
+  $("#title").textContent = w ? w.name : "No workout yet";
+  $("#sub").textContent = "For " + data.first_name + " · Coach Masi" + (w ? " · updated " + new Date(w.updated_at).toLocaleDateString("en-CA") : "");
+  document.title = (w ? w.name : "Your workout") + " · Train with Masi";
+  if (!w) { $("#content").innerHTML = '<p class="empty">Masi hasn\'t set your workout yet. Check back soon.</p>'; return; }
+
+  // last logged weight per exercise
+  var last = {};
+  (data.logs || []).forEach(function (l) { if (!last[l.exercise_id]) last[l.exercise_id] = l; });
+
+  var saved = {};
+  var key = "tw-" + code;
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch (e) {}
+  function persist() { try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {} }
+
+  var html = '<div class="strip"><div><b>' + w.items.length + '</b><span>exercises</span></div>' +
+    '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div>' +
+    '<div><b>' + esc(uniq(w.items.flatMap(function (i) { return i.muscles || []; })).slice(0, 2).join(" · ") || "–") + '</b><span>focus</span></div></div>' +
+    '<h2>Main work</h2><ol class="ex">';
+  w.items.forEach(function (it, idx) {
+    var sets = it.sets || 3;
+    html += '<li><div class="num">' + (idx + 1) + '</div><div>' +
+      '<h3 class="name">' + esc(it.name) + '</h3>' +
+      '<div class="dose">' +
+      (it.sets ? '<div><b>' + it.sets + ' × ' + esc(it.reps || "?") + '</b><small>sets × reps</small></div>' : (it.reps ? '<div><b>' + esc(it.reps) + '</b><small>reps</small></div>' : "")) +
+      (it.load_text ? '<div><b>' + esc(it.load_text) + '</b><small>load</small></div>' : "") +
+      (it.rest_seconds ? '<div><b>' + it.rest_seconds + ' s</b><small>rest</small></div>' : "") +
+      '</div>' +
+      (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
+      '<div class="row"><div class="sets" aria-label="Mark sets done">' +
+      Array.from({ length: sets }, function (_, s) { return '<button class="set" data-k="s' + it.exercise_id + '-' + s + '" aria-pressed="' + (saved["s" + it.exercise_id + "-" + s] ? "true" : "false") + '">' + (s + 1) + '</button>'; }).join("") +
+      '</div>' +
+      '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc((it.load_text || "").replace(/[^\d.]/g, "") || "kg") + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
+      '</div>' +
+      '<p class="last" data-last="' + it.exercise_id + '">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
+      '</div></li>';
+  });
+  html += "</ol>";
+  $("#content").innerHTML = html;
+
+  document.querySelectorAll(".set").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var on = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      saved[b.dataset.k] = on; persist();
+    });
+  });
+  document.querySelectorAll(".video").forEach(function (v) {
+    v.addEventListener("click", function () {
+      var f = document.createElement("iframe");
+      f.src = "https://www.youtube-nocookie.com/embed/" + v.dataset.yt + "?autoplay=1&rel=0&playsinline=1";
+      f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"; f.allowFullscreen = true;
+      v.replaceChildren(f);
+    }, { once: true });
+  });
+  document.querySelectorAll("form.kg").forEach(function (form) {
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var input = form.querySelector("input"), btn = form.querySelector(".save");
+      var value = parseFloat(input.value);
+      if (!(value > 0)) { input.focus(); return; }
+      btn.disabled = true; btn.textContent = "…";
+      try {
+        var r = await fetch(API + "/api/client/" + encodeURIComponent(code) + "/log", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exercise_id: Number(form.dataset.ex), load_value: value, load_unit: "kg" }),
+        });
+        if (!r.ok) throw new Error(r.status);
+        var j = await r.json();
+        form.parentElement.nextElementSibling.innerHTML = "Last logged: <b>" + value + " kg</b> on " + j.date;
+        btn.textContent = "Saved ✓";
+        setTimeout(function () { btn.textContent = "Save"; btn.disabled = false; }, 1500);
+      } catch (err) {
+        btn.textContent = "Retry"; btn.disabled = false;
+      }
+    });
+  });
+
+  function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
+})();
+</script>
+</body>
+</html>
