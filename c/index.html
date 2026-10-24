@@ -98,6 +98,7 @@ footer p{margin:4px 0}
   }
 
   var ws = data.workouts || [];
+  var doneToday = data.done_today || [];
   var newest = ws.reduce(function (a, w) { return !a || w.updated_at > a.updated_at ? w : a; }, null);
   $("#title").textContent = ws.length ? (ws.length === 1 ? ws[0].name : "Your workouts") : "No workout yet";
   $("#sub").textContent = "For " + data.first_name + " · Coach Masi" + (newest ? " · updated " + new Date(newest.updated_at).toLocaleDateString("en-CA") : "");
@@ -130,14 +131,14 @@ footer p{margin:4px 0}
         '</div>' +
         (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
         '<div class="row">' +
-        '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc((it.load_text || "").replace(/[^\d.]/g, "") || "kg") + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
+        '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc(((it.load_text || "").match(/(\d+(?:\.\d+)?)\s*(?:kg|lb)?\s*$/i) || [, "kg"])[1]) + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
         '</div>' +
         '<p class="last">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
         '</div></li>';
     });
     html += "</ol>" +
-      '<div class="donebar"><button class="done" data-w="' + esc(w.name) + '"' + (saved["done-" + w.name] === today() ? ' data-done="1"' : "") + '>' +
-      (saved["done-" + w.name] === today() ? "Done today ✓" : "I did this workout ✓") + '</button></div>';
+      '<div class="donebar"><button class="done" data-w="' + esc(w.name) + '"' + (doneToday.indexOf(w.name) >= 0 ? ' data-done="1"' : "") + '>' +
+      (doneToday.indexOf(w.name) >= 0 ? "Done today ✓" : "I did this workout ✓") + '</button></div>';
   });
   $("#content").innerHTML = html;
 
@@ -152,7 +153,6 @@ footer p{margin:4px 0}
         });
         if (!r.ok) throw new Error(r.status);
         b.textContent = "Done today ✓"; b.dataset.done = "1";
-        saved["done-" + b.dataset.w] = today(); persist();
       } catch (err) {
         b.textContent = "Couldn't save — tap to retry"; b.disabled = false;
       }
