@@ -62,6 +62,19 @@ ol.ex li{display:grid;grid-template-columns:36px 1fr;column-gap:12px;padding:18p
 footer{margin-top:28px;font-size:13px;color:var(--muted)}
 footer p{margin:4px 0}
 .empty{padding:40px 0;color:var(--muted)}
+.back{display:inline-flex;align-items:center;gap:4px;margin:0 0 10px;padding:6px 0;border:0;background:none;color:var(--accent);font:600 14px var(--body);cursor:pointer;text-decoration:none}
+.picks{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:12px}
+.pick{display:flex;align-items:center;gap:12px;width:100%;min-height:76px;padding:14px 16px;background:var(--surface);border:2px solid var(--rule);border-radius:10px;color:var(--ink);text-align:left;cursor:pointer;font:inherit;text-decoration:none}
+.pick:hover{border-color:var(--accent)}
+.pick:focus-visible,.back:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pick.next{border-color:var(--accent)}
+.pick .pn{flex:1;min-width:0}
+.pick .pt{display:block;font-family:var(--display);font-size:26px;font-weight:600;line-height:1.05;overflow-wrap:anywhere}
+.pick .pm{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:4px;font-size:13px;color:var(--muted)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.tag.nx{background:var(--accent);color:var(--accent-ink)}
+.tag.dn{background:transparent;color:var(--ok);border:1px solid var(--ok)}
+.pick .chev{font-size:26px;color:var(--muted);line-height:1}
 </style>
 </head>
 <body>
@@ -73,7 +86,7 @@ footer p{margin:4px 0}
   </header>
   <div id="content"></div>
   <footer>
-    <p>Type the weight you used and press Save, and tap "I did this workout" when you finish — Masi sees both.</p>
+    <p id="footnote">Type the weight you used and press Save, and tap "I did this workout" when you finish — Masi sees both.</p>
     <p>Questions? Message Masi on WhatsApp.</p>
   </footer>
 </div>
@@ -99,26 +112,80 @@ footer p{margin:4px 0}
 
   var ws = data.workouts || [];
   var doneToday = data.done_today || [];
-  var newest = ws.reduce(function (a, w) { return !a || w.updated_at > a.updated_at ? w : a; }, null);
-  $("#title").textContent = ws.length ? (ws.length === 1 ? ws[0].name : "Your workouts") : "No workout yet";
-  $("#sub").textContent = "For " + data.first_name + " · Coach Masi" + (newest ? " · updated " + new Date(newest.updated_at).toLocaleDateString("en-CA") : "");
-  document.title = (ws.length ? "Your workout" : "Train with Masi") + " · Train with Masi";
-  if (!ws.length) { $("#content").innerHTML = '<p class="empty">Masi hasn\'t set your workout yet. Check back soon.</p>'; return; }
+  var lastDone = data.last_done || {};
+  var first = data.first_name;
+  if (!ws.length) {
+    $("#title").textContent = "No workout yet";
+    $("#sub").textContent = "For " + first + " · Coach Masi";
+    $("#content").innerHTML = '<p class="empty">Masi hasn\'t set your workout yet. Check back soon.</p>';
+    return;
+  }
 
   // last logged weight per exercise
   var last = {};
   (data.logs || []).forEach(function (l) { if (!last[l.exercise_id]) last[l.exercise_id] = l; });
 
-  var saved = {};
-  var key = "tw-" + code;
-  try { saved = JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch (e) {}
-  function persist() { try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {} }
+  // "Next up": the program done longest ago (never done counts as oldest; ties go to list order).
+  // Only among programs not already done today; none if everything is done today.
+  var nextIdx = -1;
+  if (ws.length > 1) {
+    ws.forEach(function (w, i) {
+      if (doneToday.indexOf(w.name) >= 0) return;
+      if (nextIdx < 0 || (lastDone[w.name] || "") < (lastDone[ws[nextIdx].name] || "")) nextIdx = i;
+    });
+  }
 
-  var html = "";
-  ws.forEach(function (w, wi) {
+  // Views: one program → straight in. Several → picker, and "#1", "#2"… opens one (phone Back button works).
+  function route() {
+    var n = parseInt(location.hash.slice(1), 10);
+    if (ws.length === 1) showProgram(0, false);
+    else if (n >= 1 && n <= ws.length) showProgram(n - 1, true);
+    else showPicker();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+  route();
+
+  function showPicker() {
+    $("#title").textContent = "Hi " + first + " 👋";
+    $("#sub").textContent = "Pick today's workout";
+    document.title = "Your workouts · Train with Masi";
+    var html = '<ul class="picks">';
+    ws.forEach(function (w, i) {
+      var done = doneToday.indexOf(w.name) >= 0;
+      html += '<li><a class="pick' + (i === nextIdx ? " next" : "") + '" href="#' + (i + 1) + '">' +
+        '<span class="pn"><span class="pt">' + esc(w.name) + '</span><span class="pm">' +
+        w.items.length + ' exercise' + (w.items.length === 1 ? "" : "s") +
+        (done ? ' <span class="tag dn">✓ Done today</span>' : "") +
+        (i === nextIdx ? ' <span class="tag nx">Next up</span>' : "") +
+        '</span></span><span class="chev" aria-hidden="true">›</span></a></li>';
+    });
+    $("#content").innerHTML = html + "</ul>";
+    var b = document.querySelector(".back"); if (b) b.remove();
+    $("#footnote").hidden = true;
+  }
+
+  function showProgram(wi, withBack) {
+    var w = ws[wi];
+    $("#title").textContent = w.name;
+    $("#sub").textContent = "For " + first + " · Coach Masi · updated " + new Date(w.updated_at).toLocaleDateString("en-CA");
+    document.title = w.name + " · Train with Masi";
+    $("#content").innerHTML = programHtml(w);
+    var hdr = document.querySelector("header");
+    var old = document.querySelector(".back"); if (old) old.remove();
+    if (withBack) {
+      var a = document.createElement("a");
+      a.className = "back"; a.href = "#"; a.textContent = "← All workouts";
+      hdr.insertBefore(a, hdr.firstChild);
+    }
+    $("#footnote").hidden = false;
+    bind();
+  }
+
+  function programHtml(w) {
+    var html = "";
     var muscles = uniq(w.items.flatMap(function (i) { return i.muscles || []; })).slice(0, 2).join(" · ") || "–";
-    html += '<h2>' + esc(w.name) + '</h2>' +
-      '<div class="strip"><div><b>' + w.items.length + '</b><span>exercises</span></div>' +
+    html += '<div class="strip"><div><b>' + w.items.length + '</b><span>exercises</span></div>' +
       '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div>' +
       '<div><b>' + esc(muscles) + '</b><span>focus</span></div></div><ol class="ex">';
     w.items.forEach(function (it, idx) {
@@ -139,9 +206,10 @@ footer p{margin:4px 0}
     html += "</ol>" +
       '<div class="donebar"><button class="done" data-w="' + esc(w.name) + '"' + (doneToday.indexOf(w.name) >= 0 ? ' data-done="1"' : "") + '>' +
       (doneToday.indexOf(w.name) >= 0 ? "Done today ✓" : "I did this workout ✓") + '</button></div>';
-  });
-  $("#content").innerHTML = html;
+    return html;
+  }
 
+  function bind() {
   document.querySelectorAll(".done").forEach(function (b) {
     b.addEventListener("click", async function () {
       if (b.dataset.done) return;
@@ -153,6 +221,7 @@ footer p{margin:4px 0}
         });
         if (!r.ok) throw new Error(r.status);
         b.textContent = "Done today ✓"; b.dataset.done = "1";
+        if (doneToday.indexOf(b.dataset.w) < 0) doneToday.push(b.dataset.w);
       } catch (err) {
         b.textContent = "Couldn't save — tap to retry"; b.disabled = false;
       }
@@ -181,6 +250,7 @@ footer p{margin:4px 0}
         if (!r.ok) throw new Error(r.status);
         var j = await r.json();
         form.parentElement.nextElementSibling.innerHTML = "Last logged: <b>" + value + " kg</b> on " + j.date;
+        last[Number(form.dataset.ex)] = { value: value, unit: "kg", date: j.date };
         btn.textContent = "Saved ✓";
         setTimeout(function () { btn.textContent = "Save"; btn.disabled = false; }, 1500);
       } catch (err) {
@@ -188,6 +258,7 @@ footer p{margin:4px 0}
       }
     });
   });
+  }
 
   function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
   function today() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" }); }
