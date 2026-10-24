@@ -97,11 +97,12 @@ footer p{margin:4px 0}
     return;
   }
 
-  var w = data.workout;
-  $("#title").textContent = w ? w.name : "No workout yet";
-  $("#sub").textContent = "For " + data.first_name + " · Coach Masi" + (w ? " · updated " + new Date(w.updated_at).toLocaleDateString("en-CA") : "");
-  document.title = (w ? w.name : "Your workout") + " · Train with Masi";
-  if (!w) { $("#content").innerHTML = '<p class="empty">Masi hasn\'t set your workout yet. Check back soon.</p>'; return; }
+  var ws = data.workouts || [];
+  var newest = ws.reduce(function (a, w) { return !a || w.updated_at > a.updated_at ? w : a; }, null);
+  $("#title").textContent = ws.length ? (ws.length === 1 ? ws[0].name : "Your workouts") : "No workout yet";
+  $("#sub").textContent = "For " + data.first_name + " · Coach Masi" + (newest ? " · updated " + new Date(newest.updated_at).toLocaleDateString("en-CA") : "");
+  document.title = (ws.length ? "Your workout" : "Train with Masi") + " · Train with Masi";
+  if (!ws.length) { $("#content").innerHTML = '<p class="empty">Masi hasn\'t set your workout yet. Check back soon.</p>'; return; }
 
   // last logged weight per exercise
   var last = {};
@@ -112,29 +113,34 @@ footer p{margin:4px 0}
   try { saved = JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch (e) {}
   function persist() { try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {} }
 
-  var html = '<div class="strip"><div><b>' + w.items.length + '</b><span>exercises</span></div>' +
-    '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div>' +
-    '<div><b>' + esc(uniq(w.items.flatMap(function (i) { return i.muscles || []; })).slice(0, 2).join(" · ") || "–") + '</b><span>focus</span></div></div>' +
-    '<h2>Main work</h2><ol class="ex">';
-  w.items.forEach(function (it, idx) {
-    var sets = it.sets || 3;
-    html += '<li><div class="num">' + (idx + 1) + '</div><div>' +
-      '<h3 class="name">' + esc(it.name) + '</h3>' +
-      '<div class="dose">' +
-      (it.sets ? '<div><b>' + it.sets + ' × ' + esc(it.reps || "?") + '</b><small>sets × reps</small></div>' : (it.reps ? '<div><b>' + esc(it.reps) + '</b><small>reps</small></div>' : "")) +
-      (it.load_text ? '<div><b>' + esc(it.load_text) + '</b><small>load</small></div>' : "") +
-      (it.rest_seconds ? '<div><b>' + it.rest_seconds + ' s</b><small>rest</small></div>' : "") +
-      '</div>' +
-      (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
-      '<div class="row"><div class="sets" aria-label="Mark sets done">' +
-      Array.from({ length: sets }, function (_, s) { return '<button class="set" data-k="s' + it.exercise_id + '-' + s + '" aria-pressed="' + (saved["s" + it.exercise_id + "-" + s] ? "true" : "false") + '">' + (s + 1) + '</button>'; }).join("") +
-      '</div>' +
-      '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc((it.load_text || "").replace(/[^\d.]/g, "") || "kg") + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
-      '</div>' +
-      '<p class="last" data-last="' + it.exercise_id + '">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
-      '</div></li>';
+  var html = "";
+  ws.forEach(function (w, wi) {
+    var muscles = uniq(w.items.flatMap(function (i) { return i.muscles || []; })).slice(0, 2).join(" · ") || "–";
+    html += '<h2>' + esc(w.name) + '</h2>' +
+      '<div class="strip"><div><b>' + w.items.length + '</b><span>exercises</span></div>' +
+      '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div>' +
+      '<div><b>' + esc(muscles) + '</b><span>focus</span></div></div><ol class="ex">';
+    w.items.forEach(function (it, idx) {
+      var sets = it.sets || 3;
+      var sk = "s" + wi + "-" + it.exercise_id + "-";
+      html += '<li><div class="num">' + (idx + 1) + '</div><div>' +
+        '<h3 class="name">' + esc(it.name) + '</h3>' +
+        '<div class="dose">' +
+        (it.sets ? '<div><b>' + it.sets + ' × ' + esc(it.reps || "?") + '</b><small>sets × reps</small></div>' : (it.reps ? '<div><b>' + esc(it.reps) + '</b><small>reps</small></div>' : "")) +
+        (it.load_text ? '<div><b>' + esc(it.load_text) + '</b><small>load</small></div>' : "") +
+        (it.rest_seconds ? '<div><b>' + it.rest_seconds + ' s</b><small>rest</small></div>' : "") +
+        '</div>' +
+        (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
+        '<div class="row"><div class="sets" aria-label="Mark sets done">' +
+        Array.from({ length: sets }, function (_, s) { return '<button class="set" data-k="' + sk + s + '" aria-pressed="' + (saved[sk + s] ? "true" : "false") + '">' + (s + 1) + '</button>'; }).join("") +
+        '</div>' +
+        '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc((it.load_text || "").replace(/[^\d.]/g, "") || "kg") + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
+        '</div>' +
+        '<p class="last">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
+        '</div></li>';
+    });
+    html += "</ol>";
   });
-  html += "</ol>";
   $("#content").innerHTML = html;
 
   document.querySelectorAll(".set").forEach(function (b) {
