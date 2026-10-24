@@ -46,11 +46,12 @@ ol.ex li{display:grid;grid-template-columns:36px 1fr;column-gap:12px;padding:18p
 .video .play span{background:var(--accent);color:var(--accent-ink);font:600 14px var(--body);padding:10px 16px;border-radius:999px}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
-.sets{display:flex;gap:6px}
-.set{width:32px;height:32px;border:2px solid var(--rule);border-radius:50%;background:var(--surface);color:var(--muted);font:600 12px var(--body);cursor:pointer;padding:0;font-variant-numeric:tabular-nums}
-.set[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.set:focus-visible,.video:focus-visible,.save:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.kg{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.video:focus-visible,.save:focus-visible,.done:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.kg{display:inline-flex;align-items:center;gap:6px}
+.donebar{padding:20px 0 8px}
+.done{width:100%;height:48px;border:2px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);font:600 16px var(--body);cursor:pointer}
+.done[data-done="1"]{background:var(--accent);color:var(--accent-ink)}
+.done[disabled]{opacity:.7}
 .kg input{width:68px;height:36px;border:2px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink);font:600 15px var(--body);padding:0 8px;text-align:right;font-variant-numeric:tabular-nums}
 .kg input:focus-visible{outline:none;border-color:var(--accent)}
 .kg span{font-size:12px;color:var(--muted);font-weight:600}
@@ -61,7 +62,6 @@ ol.ex li{display:grid;grid-template-columns:36px 1fr;column-gap:12px;padding:18p
 footer{margin-top:28px;font-size:13px;color:var(--muted)}
 footer p{margin:4px 0}
 .empty{padding:40px 0;color:var(--muted)}
-@media (prefers-reduced-motion:no-preference){.set{transition:background .15s,border-color .15s}}
 </style>
 </head>
 <body>
@@ -73,7 +73,7 @@ footer p{margin:4px 0}
   </header>
   <div id="content"></div>
   <footer>
-    <p>Tap a circle to tick off a set. Type the weight you used and press Save — Masi sees it.</p>
+    <p>Type the weight you used and press Save, and tap "I did this workout" when you finish — Masi sees both.</p>
     <p>Questions? Message Masi on WhatsApp.</p>
   </footer>
 </div>
@@ -121,8 +121,6 @@ footer p{margin:4px 0}
       '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div>' +
       '<div><b>' + esc(muscles) + '</b><span>focus</span></div></div><ol class="ex">';
     w.items.forEach(function (it, idx) {
-      var sets = it.sets || 3;
-      var sk = "s" + wi + "-" + it.exercise_id + "-";
       html += '<li><div class="num">' + (idx + 1) + '</div><div>' +
         '<h3 class="name">' + esc(it.name) + '</h3>' +
         '<div class="dose">' +
@@ -131,23 +129,33 @@ footer p{margin:4px 0}
         (it.rest_seconds ? '<div><b>' + it.rest_seconds + ' s</b><small>rest</small></div>' : "") +
         '</div>' +
         (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
-        '<div class="row"><div class="sets" aria-label="Mark sets done">' +
-        Array.from({ length: sets }, function (_, s) { return '<button class="set" data-k="' + sk + s + '" aria-pressed="' + (saved[sk + s] ? "true" : "false") + '">' + (s + 1) + '</button>'; }).join("") +
-        '</div>' +
+        '<div class="row">' +
         '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc((it.load_text || "").replace(/[^\d.]/g, "") || "kg") + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
         '</div>' +
         '<p class="last">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
         '</div></li>';
     });
-    html += "</ol>";
+    html += "</ol>" +
+      '<div class="donebar"><button class="done" data-w="' + esc(w.name) + '"' + (saved["done-" + w.name] === today() ? ' data-done="1"' : "") + '>' +
+      (saved["done-" + w.name] === today() ? "Done today ✓" : "I did this workout ✓") + '</button></div>';
   });
   $("#content").innerHTML = html;
 
-  document.querySelectorAll(".set").forEach(function (b) {
-    b.addEventListener("click", function () {
-      var on = b.getAttribute("aria-pressed") !== "true";
-      b.setAttribute("aria-pressed", on ? "true" : "false");
-      saved[b.dataset.k] = on; persist();
+  document.querySelectorAll(".done").forEach(function (b) {
+    b.addEventListener("click", async function () {
+      if (b.dataset.done) return;
+      b.disabled = true; b.textContent = "…";
+      try {
+        var r = await fetch(API + "/api/client/" + encodeURIComponent(code) + "/done", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workout_name: b.dataset.w }),
+        });
+        if (!r.ok) throw new Error(r.status);
+        b.textContent = "Done today ✓"; b.dataset.done = "1";
+        saved["done-" + b.dataset.w] = today(); persist();
+      } catch (err) {
+        b.textContent = "Couldn't save — tap to retry"; b.disabled = false;
+      }
     });
   });
   document.querySelectorAll(".video").forEach(function (v) {
@@ -182,6 +190,7 @@ footer p{margin:4px 0}
   });
 
   function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
+  function today() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" }); }
 })();
 </script>
 </body>
