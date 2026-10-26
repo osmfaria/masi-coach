@@ -193,6 +193,17 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
     bind();
   }
 
+  // Show the "weight used" box only when a weight makes sense: not for timed sets, bodyweight or bands,
+  // and not for classic bodyweight moves unless Masi gave them a load (a vest, a plate…).
+  var BODYWEIGHT = /\b(plank|side plank|push ?-?ups?|pull ?-?ups?|chin ?-?ups?|dead ?bugs?|bird ?dogs?|superman|wall sits?|crunch(es)?|sit ?-?ups?|burpees?|mountain climbers?|jumping jacks?|hollow (hold|body)|bear crawls?|inverted rows?|dips?|ski erg|bike|row(ing)? machine|treadmill|stretch(es|ing)?|mobility|balance)\b/i;
+  function showWeight(it) {
+    var load = (it.load_text || "").trim(), reps = (it.reps || "").trim();
+    if (/\b(bodyweight|body weight|bw|band|bands|assisted)\b/i.test(load)) return false;
+    if (/\d/.test(load)) return true;                                   // Masi gave a weight
+    if (/\b(s|sec|secs|seconds?|min|mins|minutes?|m)\b|\d+\s*(s|m)\b|:/i.test(reps)) return false; // timed / distance
+    return !BODYWEIGHT.test(it.name || "");
+  }
+
   // Unit for the "weight used" box: whatever Masi wrote for this exercise; pounds unless she wrote kg.
   function unitOf(it) { return /\b(kg|kgs|kilos?)\b/i.test(it.load_text || "") ? "kg" : "lb"; }
 
@@ -207,10 +218,10 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
         '</div>' +
         (it.note ? '<p class="cnote"><span aria-hidden="true">💬</span> ' + esc(it.note) + '</p>' : "") +
         (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
-        '<div class="row">' +
+        (showWeight(it) ? '<div class="row">' +
         '<form class="kg" data-ex="' + it.exercise_id + '" data-unit="' + unitOf(it) + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc(((it.load_text || "").match(/(\d+(?:\.\d+)?)\s*(?:kg|kgs|kilos?|lbs?|pounds?)?\s*$/i) || [, ""])[1]) + '" aria-label="Weight used, ' + unitOf(it) + '"><span>' + unitOf(it) + '</span><button class="save" type="submit">Save</button></form>' +
         '</div>' +
-        '<p class="last">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
+        '<p class="last">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' : "") +
         '</div>';
   }
 
