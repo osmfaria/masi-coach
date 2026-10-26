@@ -192,6 +192,9 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
     bind();
   }
 
+  // Unit for the "weight used" box: whatever Masi wrote for this exercise; pounds unless she wrote kg.
+  function unitOf(it) { return /\b(kg|kgs|kilos?)\b/i.test(it.load_text || "") ? "kg" : "lb"; }
+
   // One exercise. label = "1", "2A"…; showRest = false inside a superset (rest is per round there).
   function itemHtml(it, label, showRest) {
     return '<div class="num">' + esc(label) + '</div><div>' +
@@ -203,7 +206,7 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
         '</div>' +
         (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
         '<div class="row">' +
-        '<form class="kg" data-ex="' + it.exercise_id + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc(((it.load_text || "").match(/(\d+(?:\.\d+)?)\s*(?:kg|lb)?\s*$/i) || [, "kg"])[1]) + '" aria-label="Weight used, kg"><span>kg</span><button class="save" type="submit">Save</button></form>' +
+        '<form class="kg" data-ex="' + it.exercise_id + '" data-unit="' + unitOf(it) + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc(((it.load_text || "").match(/(\d+(?:\.\d+)?)\s*(?:kg|kgs|kilos?|lbs?|pounds?)?\s*$/i) || [, ""])[1]) + '" aria-label="Weight used, ' + unitOf(it) + '"><span>' + unitOf(it) + '</span><button class="save" type="submit">Save</button></form>' +
         '</div>' +
         '<p class="last">' + (last[it.exercise_id] ? "Last logged: <b>" + last[it.exercise_id].value + " " + last[it.exercise_id].unit + "</b> on " + last[it.exercise_id].date : "") + '</p>' +
         '</div>';
@@ -279,12 +282,12 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
       try {
         var r = await fetch(API + "/api/client/" + encodeURIComponent(code) + "/log", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ exercise_id: Number(form.dataset.ex), load_value: value, load_unit: "kg" }),
+          body: JSON.stringify({ exercise_id: Number(form.dataset.ex), load_value: value, load_unit: form.dataset.unit || "lb" }),
         });
         if (!r.ok) throw new Error(r.status);
         var j = await r.json();
-        form.parentElement.nextElementSibling.innerHTML = "Last logged: <b>" + value + " kg</b> on " + j.date;
-        last[Number(form.dataset.ex)] = { value: value, unit: "kg", date: j.date };
+        form.parentElement.nextElementSibling.innerHTML = "Last logged: <b>" + value + " " + (form.dataset.unit || "lb") + "</b> on " + j.date;
+        last[Number(form.dataset.ex)] = { value: value, unit: form.dataset.unit || "lb", date: j.date };
         btn.textContent = "Saved ✓";
         setTimeout(function () { btn.textContent = "Save"; btn.disabled = false; }, 1500);
       } catch (err) {
