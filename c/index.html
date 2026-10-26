@@ -48,6 +48,7 @@ ol.ex li{display:grid;grid-template-columns:36px 1fr;column-gap:12px;padding:18p
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
 .video:focus-visible,.save:focus-visible,.done:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .kg{display:inline-flex;align-items:center;gap:6px}
+.cnote{margin:0 0 12px;padding:10px 12px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-radius:0 8px 8px 0;font-size:15px;line-height:1.4;color:var(--ink)}
 .donebar{padding:20px 0 8px}
 .done{width:100%;height:48px;border:2px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);font:600 16px var(--body);cursor:pointer}
 .done[data-done="1"]{background:var(--accent);color:var(--accent-ink)}
@@ -204,6 +205,7 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
         (it.load_text ? '<div><b>' + esc(it.load_text) + '</b><small>load</small></div>' : "") +
         (showRest && it.rest_seconds ? '<div><b>' + it.rest_seconds + ' s</b><small>rest</small></div>' : "") +
         '</div>' +
+        (it.note ? '<p class="cnote"><span aria-hidden="true">💬</span> ' + esc(it.note) + '</p>' : "") +
         (it.youtube_id ? '<button class="video" data-yt="' + esc(it.youtube_id) + '" aria-label="Play demo video: ' + esc(it.name) + '"><img src="https://i.ytimg.com/vi/' + esc(it.youtube_id) + '/hqdefault.jpg" alt="" loading="lazy"><div class="play"><span>▶ Watch demo</span></div></button>' : "") +
         '<div class="row">' +
         '<form class="kg" data-ex="' + it.exercise_id + '" data-unit="' + unitOf(it) + '"><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="' + esc(((it.load_text || "").match(/(\d+(?:\.\d+)?)\s*(?:kg|kgs|kilos?|lbs?|pounds?)?\s*$/i) || [, ""])[1]) + '" aria-label="Weight used, ' + unitOf(it) + '"><span>' + unitOf(it) + '</span><button class="save" type="submit">Save</button></form>' +
