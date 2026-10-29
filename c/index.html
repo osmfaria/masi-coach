@@ -227,10 +227,8 @@ ol.ex .sslink{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px
 
   function programHtml(w) {
     var html = "";
-    var muscles = uniq(w.items.flatMap(function (i) { return i.muscles || []; })).slice(0, 2).join(" · ") || "–";
     html += '<div class="strip"><div><b>' + w.items.length + '</b><span>exercises</span></div>' +
-      '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div>' +
-      '<div><b>' + esc(muscles) + '</b><span>focus</span></div></div><ol class="ex">';
+      '<div><b>' + w.items.reduce(function (a, i) { return a + (i.sets || 0); }, 0) + '</b><span>sets</span></div></div><ol class="ex">';
     // Group consecutive items with the same superset number into one block.
     var blocks = [];
     w.items.forEach(function (it) {
